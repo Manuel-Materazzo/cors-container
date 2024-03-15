@@ -1,12 +1,13 @@
 'use strict';
 
-const request = require('request-promise');
-const converter = require('rel-to-abs');
-const fs = require('fs');
-const index = fs.readFileSync('index.html', 'utf8');
-const ResponseBuilder = require('./app/ResponseBuilder');
+import fetch from "node-fetch";
+import converter from "rel-to-abs";
+import fs from "fs";
+import ResponseBuilder from "./app/ResponseBuilder.js";
 
-module.exports = app => {
+const index = fs.readFileSync('index.html', 'utf8');
+
+export default app => {
     app.get('/*', (req, res) => {
         const responseBuilder = new ResponseBuilder(res);
 
@@ -35,46 +36,46 @@ module.exports = app => {
             serializedHeaders.split("&").forEach(serializedHeader => {
                 const header = serializedHeader.split("=");
                 const key = decodeURIComponent(header[0]);
-                console.log(key)
                 const value = decodeURIComponent(header[1]);
-                console.log(value)
                 headers[key] = value;
             })
         }
 
-        request({
-            uri: requestedUrl,
-            resolveWithFullResponse: true,
+        fetch(requestedUrl, {
+            method: 'GET',
             headers: headers
-        })
-            .then(originResponse => {
-                responseBuilder
-                    .addHeaderByKeyValue('Access-Control-Allow-Origin', '*')
-                    .addHeaderByKeyValue('Access-Control-Allow-Credentials', false)
-                    .addHeaderByKeyValue('Access-Control-Allow-Headers', 'Content-Type')
-                    .addHeaderByKeyValue('X-Proxied-By', 'cors-container')
-                    .build(originResponse.headers);
-                if (req.headers['rewrite-urls']) {
-                    res.send(
-                        converter
-                            .convert(originResponse.body, requestedUrl)
-                            .replace(requestedUrl, corsBaseUrl + '/' + requestedUrl)
-                    );
-                } else {
-                    res.send(originResponse.body);
+        }).then(async originResponse => {
+            // add all headers of the original response but content-encoding. gzip is trouble.
+            originResponse.headers.forEach((value, name) => {
+                if (name !== 'content-encoding') {
+                    res.setHeader(name, value);
                 }
-            })
-            .catch(originResponse => {
-                responseBuilder
-                    .addHeaderByKeyValue('Access-Control-Allow-Origin', '*')
-                    .addHeaderByKeyValue('Access-Control-Allow-Credentials', false)
-                    .addHeaderByKeyValue('Access-Control-Allow-Headers', 'Content-Type')
-                    .addHeaderByKeyValue('X-Proxied-By', 'cors-containermeh')
-                    .build(originResponse.headers);
-
-                res.status(originResponse.statusCode || 500);
-
-                return res.send(originResponse.message);
             });
+            // replace cors headers
+            res.setHeader('Access-Control-Allow-Origin', '*')
+            res.setHeader('Access-Control-Allow-Credentials', false)
+            res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+            if (req.headers['rewrite-urls']) {
+                res.send(
+                    converter
+                        .convert(await originResponse.text(), requestedUrl)
+                        .replace(requestedUrl, corsBaseUrl + '/' + requestedUrl)
+                );
+            } else {
+                originResponse.body.pipe(res);
+            }
+        }).catch(originResponse => {
+            responseBuilder
+                .addHeaderByKeyValue('Access-Control-Allow-Origin', '*')
+                .addHeaderByKeyValue('Access-Control-Allow-Credentials', false)
+                .addHeaderByKeyValue('Access-Control-Allow-Headers', 'Content-Type')
+                .addHeaderByKeyValue('X-Proxied-By', 'cors-containermeh')
+                .build(originResponse.headers);
+
+            res.status(originResponse.statusCode || 500);
+
+            return res.send(originResponse.message);
+        });
+
     });
 };

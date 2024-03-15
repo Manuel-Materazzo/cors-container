@@ -14,4 +14,4 @@ ResponseBuilder.prototype.build = function(headers){
     return headers ? this.response.header(Object.assign(headers, this.headers)) : this;
 }
 
-module.exports = ResponseBuilder;
+export default ResponseBuilder

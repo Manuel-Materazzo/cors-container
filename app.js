@@ -1,19 +1,21 @@
 'use strict';
 
-const express = require('express');
-const cors = require('cors');
-const compression = require('compression');
-const cluster = require('cluster');
-const app = express();
-const numCPUs = require('os').cpus().length;
+import express from "express";
+import cors from "cors";
+import compression from "compression";
+import cluster from "cluster";
+import os from "os";
+import bootstrap from './bootstrap.js';
 
-const isMasterWorker = cluster.isMaster && !module.parent;
+
+const app = express();
+const numCPUs = os.cpus().length;
 
 app.use(compression());
 
 app.set('x-powered-by', false)
 
-function clusterApp(){
+function clusterApp() {
     for (let i = 0; i < numCPUs; i++) {
         cluster.fork();
     }
@@ -23,20 +25,14 @@ function clusterApp(){
     console.info("cors-container listening on port 3000 with " + numCPUs + " threads.")
 }
 
-function listen(){
+if (cluster.isWorker) {
     app.listen(process.env.PORT || 3000);
-}
-
-if (isMasterWorker) {
-    clusterApp();
 } else {
-    if (!module.parent) {
-        listen();
-    }
+    clusterApp();
 }
 
 app.options('*', cors())
 
-require(__dirname + '/bootstrap')(app);
+bootstrap(app);
 
-module.exports = app;
+export default app

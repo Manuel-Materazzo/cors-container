@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "A CORS proxy.",
   "main": "app.js",
+  "type": "module",
   "scripts": {
     "start": "node app.js",
     "test": "node_modules/mocha/bin/mocha --recursive"
@@ -30,7 +31,7 @@
     "mocha": "10.3.0",
     "nock": "13.5.4",
     "rel-to-abs": "0.1.0",
-    "request-promise": "4.2.6",
+    "node-fetch": "3.3.2",
     "supertest": "6.3.4"
   }
 }

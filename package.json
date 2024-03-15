@@ -22,15 +22,15 @@
   },
   "homepage": "https://github.com/imjacobclark/cors-proxy#readme",
   "dependencies": {
-    "chai": "^3.5.0",
-    "chai-spies": "^0.7.1",
-    "compression": "^1.6.1",
-    "cors": "^2.8.5",
-    "express": "^4.13.4",
-    "mocha": "^7.1.2",
-    "nock": "^12.0.3",
-    "rel-to-abs": "^0.1.0",
-    "request-promise": "^2.0.0",
-    "supertest": "^4.0.2"
+    "chai": "5.1.0",
+    "chai-spies": "1.1.0",
+    "compression": "1.7.4",
+    "cors": "2.8.5",
+    "express": "4.18.3",
+    "mocha": "10.3.0",
+    "nock": "13.5.4",
+    "rel-to-abs": "0.1.0",
+    "request-promise": "4.2.6",
+    "supertest": "6.3.4"
   }
 }
